@@ -228,7 +228,7 @@ public class Sudok {
         a.createFullBoard(0, 0);
         a.printBoard(a.full_board);
         System.out.println();
-        //a.createSudokuPazzle(100);
+        a.createSudokuPazzle(100);
         a.printBoard(a.puzzle_board);
         System.out.println();
         a.solveSudokuPazzle();
