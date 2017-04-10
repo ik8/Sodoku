@@ -46,7 +46,7 @@ public class Menu extends JFrame {
         }
 
         public void actionPerformed(ActionEvent e) {
-            new Board(levels_arr[index]);
+            new Board();
             dispose();
         }
     }

@@ -28,6 +28,22 @@ public class Counter{
             seconds++;
     }
 
+    public int getSeconds() {
+        return seconds;
+    }
+
+    public void setSeconds(int seconds) {
+        this.seconds = seconds;
+    }
+
+    public int getMinutes() {
+        return minutes;
+    }
+
+    public void setMinutes(int minutes) {
+        this.minutes = minutes;
+    }
+
     public String FormattedTime() {
         return String.format("%02d : %02d", minutes, seconds);
     }

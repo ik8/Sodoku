@@ -178,10 +178,10 @@ public class Sudok {
 
         for (i = 0;i < 9; i++)
             for (j = 0;j < 9 && numbers_to_delete > 0; j++) {
-                k = puzzle_board[numbers1[i]-1][numbers2[j]-1];
-                puzzle_board[numbers1[i]-1][numbers2[j]-1] = 0;
+                k = puzzle_board[numbers2[i]-1][numbers1[j]-1];
+                puzzle_board[numbers2[i]-1][numbers1[j]-1] = 0;
                 if(canBeSolved(puzzle_board) != 1)
-                    puzzle_board[numbers1[i]-1][numbers2[j]-1] = k;
+                    puzzle_board[numbers2[i]-1][numbers1[j]-1] = k;
                 else
                     numbers_to_delete--;
             }
@@ -197,6 +197,7 @@ public class Sudok {
             }
             System.out.println();
         }
+        System.out.println();
     }
 
     public int[][] getFull_board() {
