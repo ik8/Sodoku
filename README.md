@@ -1,8 +1,8 @@
-#Sudoku
+# Sudoku
 
 Sudoku puzzle generator and solver
 
-`Sudok board = new Sudok();  // Creates a new Sudoku Object.` 
+`Sudok a = new Sudok();  // Creates a new Sudoku Object.` 
  
  ```
      a.createFullBoard(0, 0);      // Creates the board
