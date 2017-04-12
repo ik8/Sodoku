@@ -50,6 +50,9 @@ public class Board extends JFrame implements Runnable, Serializable{
     private boolean gameloaded = false;
     private int[][] loaded_puzzle_board = new int[9][9];
     private JMenuItem save_button;
+    private JMenu game_actions;
+    private int[][] undo_board;
+    private int move_count=0;
 
 
 
@@ -208,11 +211,43 @@ public class Board extends JFrame implements Runnable, Serializable{
         menu.add(menuItem);
         menu.addSeparator();
 
+        game_actions = new JMenu("Game actions");
+        // set shortcut using setMnemonic method, uses the ALT mask
+        game_actions.setMnemonic(KeyEvent.VK_P);// Load with Alt+F
+        // add menu to menuBar
+        menuBar.add(game_actions);
+        game_actions.setEnabled(false);
+
+        menuItem = new JMenuItem("  Reset game",new ImageIcon("Star Trek.JPG"));
+        menuItem.setToolTipText("Click to reset game");
+        menuItem.setAccelerator(KeyStroke.getKeyStroke(
+                KeyEvent.VK_R, ActionEvent.CTRL_MASK));
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                resetBoard();
+            }
+        });
+
+        game_actions.add(menuItem);
+        game_actions.addSeparator();
+
+        menuItem = new JMenuItem("  Undo move",new ImageIcon("Star Trek.JPG"));
+        menuItem.setToolTipText("Click to undo last move");
+        menuItem.setAccelerator(KeyStroke.getKeyStroke(
+                KeyEvent.VK_U, ActionEvent.CTRL_MASK));
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                undoMove();
+            }
+        });
+
+        game_actions.add(menuItem);
+        game_actions.addSeparator();
 
     }
 
     public void initBoard() { // Builds the graphical board
-        save_button.setEnabled(true);
+
         if(!board_flag) {
             main = new JPanel();
             main.setLayout(new BorderLayout());
@@ -245,7 +280,6 @@ public class Board extends JFrame implements Runnable, Serializable{
                         }
                     });
                     SimpleTimer.start();
-
                     for (int i = 0; i < 9; i++) {
                         for (int j = 0; j < 9; j++) {
                             if(players_board[i][j] != 0)
@@ -317,9 +351,12 @@ public class Board extends JFrame implements Runnable, Serializable{
         for (int i = 0; i < board_size; i++) {
             numbers[i] = new Icon[board_size];
         }
+        undo_board = new int[9][9];
         for (int i = 0; i < board_size; i++) {
+            undo_board[i] = new int[9];
             numbers[i] = new Icon[board_size];
             for (int j = 0; j < board_size; j++) {
+                undo_board[i][j] = 0;
                 if(sudoku.getPuzzle_board()[i][j]!=0)
                     icon = new ImageIcon(Integer.toString(players_board[i][j]) + "-black.png");
                 else
@@ -346,6 +383,8 @@ public class Board extends JFrame implements Runnable, Serializable{
         }
         main.add(board_panel, BorderLayout.CENTER);
         add(main);
+        game_actions.setEnabled(true);
+        save_button.setEnabled(true);
     }
 
     public void newGUIBoardDisplay(Levels x) {
@@ -427,16 +466,37 @@ public class Board extends JFrame implements Runnable, Serializable{
         }
 
         public void keyPressed(KeyEvent e) {
-            if(e.getKeyCode() == KeyEvent.VK_I)
-                newGUIBoardDisplay(Levels.HARD);
             if(e.getKeyCode() == KeyEvent.VK_D && sudoku.getPuzzle_board()[row][col] == 0) {
                 players_board[row][col] = 0;
                 Image img;
                 ImageIcon icon = new ImageIcon("question_mark.jpg");
                 img = icon.getImage();
                 numbers[row][col].setImg(img);
+                clue.setEnabled(true);
+                undo_board[row][col] = 0;
                 repaint();
             }
+            if(e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
+                numbers[row][col].setBorder(new LineBorder(Color.WHITE));
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_RIGHT:
+                        col = (col == 8)?0:col+1;
+                        break;
+                    case KeyEvent.VK_LEFT:
+                        col = (col == 0)?8:col-1;
+                        break;
+                    case KeyEvent.VK_UP:
+                        row = (row==0)?8:row-1;
+                        break;
+                    case KeyEvent.VK_DOWN:
+                        row = (row==8)?0:row+1;
+                        break;
+                }
+                numbers[row][col].setBorder(new LineBorder(Color.ORANGE, 5));
+                setFocusable(true);
+
+            }
+
             if(level_description == Levels.SOLVER) {
                 if(e.getKeyCode() <= KeyEvent.VK_9 && e.getKeyCode() >= KeyEvent.VK_0) {
                     Image img;
@@ -444,18 +504,20 @@ public class Board extends JFrame implements Runnable, Serializable{
                     img = icon.getImage();
                     numbers[row][col].setImg(img);
                     players_board[row][col] = e.getKeyCode() - '0';
+                    undo_board[row][col] = ++move_count;
                     repaint();
 
                 }
 
             }
-            else if(e.getKeyCode() <= KeyEvent.VK_9 && e.getKeyCode() >= KeyEvent.VK_0) {
+            else if(e.getKeyCode() <= KeyEvent.VK_9 && e.getKeyCode() > KeyEvent.VK_0) {
                 if(sudoku.getPuzzle_board()[row][col] == 0) {
                     Image img;
                     ImageIcon icon = new ImageIcon(Integer.toString(e.getKeyCode() - '0') + ".png");
                     img = icon.getImage();
                     numbers[row][col].setImg(img);
                     players_board[row][col] = e.getKeyCode() - '0';
+                    undo_board[row][col] = ++move_count;
                     repaint();
                     if(CheckWinner()) {
                         SimpleTimer.stop();
@@ -479,6 +541,7 @@ public class Board extends JFrame implements Runnable, Serializable{
 
     public void giveClue(JButton clue) {
         boolean clue_given = false;
+        int tries = 100;
         Image img;
         do {
             Random random = new Random();
@@ -495,9 +558,41 @@ public class Board extends JFrame implements Runnable, Serializable{
                 players_board[number1][number2] = sudoku.getPuzzle_board()[number1][number2];
                 question_marks--;
             }
-        } while(!clue_given);
+            tries--;
+        } while(!clue_given && tries!= 0);
         if(question_marks == 0)
             clue.setEnabled(false);
+        boolean clue_flag = true;
+        if(tries == 0) {
+            for (int i = 0; i < 9; i++) {
+                for (int j = 0; j < 9; j++) {
+                    if (players_board[i][j] == 0) {
+                        players_board[i][j] = sudoku.getSolve_board()[i][j];
+                        ImageIcon icon = new ImageIcon(sudoku.getSolve_board()[i][j] + "-black.png");
+                        img = icon.getImage();
+                        numbers[i][j].setImg(img);
+                        repaint();
+                        clue_flag = false;
+                        clue_left--;
+                    }
+                }
+            }
+        }
+
+        if(clue_flag && tries == 0)
+            JOptionPane.showMessageDialog(null, "Board full, can't help :(");
+
+        if(CheckWinner()) {
+            SimpleTimer.stop();
+            JOptionPane.showMessageDialog(null, "You won in: " + timer.FormattedTime());
+            gameFinished();
+        }
+        else if(sumBoard()){
+            JOptionPane.showMessageDialog(null, "Wrong Solution");
+
+        }
+
+
     }
 
     public void saveGame() {
@@ -520,6 +615,7 @@ public class Board extends JFrame implements Runnable, Serializable{
                 save.writeObject(sudoku.getPuzzle_board());
                 save.writeObject(players_board);
                 save.writeObject(board_flag);
+                save.writeObject(clue_left);
                 // Close the file.
                 save.close(); // This also closes saveFile.
             }
@@ -555,13 +651,15 @@ public class Board extends JFrame implements Runnable, Serializable{
                 loaded_puzzle_board = (int[][]) load.readObject();
                 players_board = (int[][]) load.readObject();
                 board_flag = (boolean) load.readObject();
+                clue_left = (int) load.readObject();
                 loadGUIGame();
 
                 // Close the file.
                 load.close(); // This also closes saveFile.
             }
         } catch(Exception exc){
-            exc.printStackTrace(); // If there was an error, print the info.
+            JOptionPane.showMessageDialog(null, "Sorry, there was an error loading the file.");
+            //exc.printStackTrace(); // If there was an error, print the info.
         }
     }
 
@@ -597,6 +695,7 @@ public class Board extends JFrame implements Runnable, Serializable{
         gameloaded = false;
     }
     public void gameFinished() {
+        game_actions.setEnabled(false);
         save_button.setEnabled(false);
         main.removeAll();
         numbers = new Icon[9][9];
@@ -615,6 +714,53 @@ public class Board extends JFrame implements Runnable, Serializable{
         repaint();
     }
 
+    public void resetBoard() {
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                players_board[i][j] = 0;
+                ImageIcon icon;
+                if(sudoku.getPuzzle_board()[i][j] != 0) {
+                    icon = new ImageIcon(Integer.toString(sudoku.getPuzzle_board()[i][j])+"-black.png");
+
+                }
+                else {
+                    icon = new ImageIcon("question_mark.jpg");
+
+                }
+                Image img = icon.getImage();
+                numbers[i][j].setImg(img);
+            }
+        }
+        repaint();
+    }
+
+    public void undoMove() {
+        int max , x , y;
+        max = x = y = 0;
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                numbers[i][j].setBorder(new LineBorder(Color.WHITE));
+                if(max < undo_board[i][j]) {
+                    max = undo_board[i][j];
+                    x = i;
+                    y = j;
+                }
+
+            }
+        }
+        repaint();
+        if(max != 0) {
+            ImageIcon icon;
+            icon = new ImageIcon("question_mark.jpg");
+            Image img = icon.getImage();
+            players_board[x][y] = 0;
+            undo_board[x][y] = 0;
+            numbers[x][y].setBorder(new LineBorder(Color.ORANGE, 5));
+            numbers[x][y].setImg(img);
+        }
+
+
+    }
 
     public void initPlayersBoard() {
         for (int i = 0; i < board_size; i++) {
