@@ -1,11 +1,13 @@
-/**
- * Created by ikosteniov on 4/5/2017.
- */
+
 public class Sudok {
 
-    private int[][] full_board = new int[9][9];
-    private int[][] solve_board = new int[9][9];
-    private int[][] puzzle_board = new int[9][9];
+    private int[][] full_board   =  new int[9][9];
+    private int[][] solve_board  =  new int[9][9];
+    private int[][] puzzle_board =  new int[9][9];
+    private int[][] human_solve_board = new int[9][9];
+    private int[][] step_board = new int[9][9];
+    private NumberOptions[][] options_array = new NumberOptions[9][9];
+    private int human_step_counter = 0;
 
     public static void shuffle(int numbers[]) {
         int random, ezer;
@@ -17,12 +19,6 @@ public class Sudok {
             ezer = numbers[i];
             numbers[i] = numbers[random];
             numbers[random] = ezer;
-        }
-    }
-
-    public static void printArray(int numbers[]) {
-        for (int i = 0; i < 9; i++) {
-            System.out.print(numbers[i] + " ");
         }
     }
 
@@ -187,55 +183,176 @@ public class Sudok {
             }
     }
 
-    public void printBoard(int board[][]) {
+    public void human_solution() {
+        for (int i = 0; i < 9; i++) {
+            human_solve_board[i] = new int[9];
+            for (int j = 0; j < 9; j++) {
+                human_solve_board[i][j] = puzzle_board[i][j];
+            }
+        }
+        init_Options();
+    }
+
+    public void init_Options() {
+        for (int i = 0; i < 9; i++) {
+            options_array[i] = new NumberOptions[9];
+            for (int j = 0; j < 9; j++) {
+                options_array[i][j] = new NumberOptions();
+                for (int k = 0; k < 9; k++) {
+                    if(isValid(human_solve_board, i, j, k+1)==0)
+                        options_array[i][j].getNumbers()[k] = true;
+                }
+            }
+        }
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
-                if(board[i][j] != 0)
-                    System.out.printf("%d ", board[i][j]);
-                else
-                    System.out.printf("- ");
+                if(human_solve_board[i][j]!=0) {
+                    for (int k = 0; k < 9; k++)
+                        options_array[i][j].getNumbers()[k] = true;
+                }
             }
-            System.out.println();
         }
-        System.out.println();
     }
+
+
+    public void updateOptions(int row, int col, int value) {
+        for (int i = 0; i < 9; i++) {
+            options_array[row][col].getNumbers()[i] = true;
+        }
+        for (int i = row/3*3; i < row/3*3+3; i++) {
+            for (int j = col/3*3; j < col/3*3+3; j++) {
+                options_array[i][j].getNumbers()[value] = true;
+            }
+        }
+
+        for (int i = 0; i < 9; i++) {
+            options_array[row][i].getNumbers()[value] = true;
+            options_array[i][col].getNumbers()[value] = true;
+        }
+    }
+
+    public boolean humanSolver(int level) {
+        int counter = 0;
+        while(!isBoardDone() && counter < 10) {
+            for (int i = 0; i < 9; i++) {
+                for (int j = 0; j < 9; j++) {
+                    if (human_solve_board[i][j] == 0) {
+                        if (!putOneOption(i, j))
+                            if (!putInSquare(i, j))
+                                if (!putInLineOrCol(i, j));
+
+
+                    }
+
+                }
+            }
+            counter++;
+        }
+        if(counter == 10) {
+            return false;
+        }
+        return true;
+
+    }
+
+    public boolean putInLineOrCol(int row, int col) {
+        int row_app, col_app;
+        row_app = col_app = 0;
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if(!options_array[row][j].getNumbers()[i])
+                    col_app++;
+                if(!options_array[j][col].getNumbers()[i])
+                    row_app++;
+            }
+            if((row_app == 1 || col_app == 1) && isValid(human_solve_board, row, col, i+1) == 1) {
+                human_solve_board[row][col] = (i+1);
+                step_board[row][col] = ++human_step_counter;
+                updateOptions(row, col, i);
+                return true;
+            }
+            row_app = col_app = 0;
+        }
+        return false;
+    }
+
+    public boolean putInSquare(int row, int col) {
+        int square_app = 0;
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                for (int k = 0; k < 9; k++) {
+                    if(!options_array[j][k].getNumbers()[i])
+                        square_app++;
+                    if(!options_array[j][k].getNumbers()[i])
+                        square_app++;
+                }
+            }
+            if(square_app == 1 && isValid(human_solve_board, row, col, i+1) == 1) {
+                human_solve_board[row][col] = (i+1);
+                step_board[row][col] = ++human_step_counter;
+                return true;
+            }
+            square_app = 0;
+        }
+        return false;
+    }
+
+
+    public boolean putOneOption(int row, int col) {
+        int optionCount = 0;
+        int number = 0;
+        for (int i = 0; i < 9; i++) {
+            if(!options_array[row][col].getNumbers()[i]) {
+                optionCount++;
+                number = i+1;
+            }
+
+        }
+        if(optionCount == 1 && isValid(human_solve_board, row, col, number) == 1) {
+            human_solve_board[row][col] = number;
+            step_board[row][col] = ++human_step_counter;
+            updateOptions(row, col, number-1);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isBoardDone() {
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if(human_solve_board[i][j] == 0)
+                    return false;
+            }
+        }
+        return true;
+    }
+
 
     public int[][] getFull_board() {
         return full_board;
     }
 
-    public void setFull_board(int[][] full_board) {
-        this.full_board = full_board;
-    }
 
     public int[][] getSolve_board() {
         return solve_board;
     }
 
-    public void setSolve_board(int[][] solve_board) {
-        this.solve_board = solve_board;
-    }
 
     public int[][] getPuzzle_board() {
         return puzzle_board;
     }
 
-    public void setPuzzle_board(int[][] puzzle_board) {
-        this.puzzle_board = puzzle_board;
+
+    public int[][] getStep_board() {
+        return step_board;
     }
 
-    public static void main(String[] args) {
-        Sudok a = new Sudok();
-        a.createFullBoard(0, 0);
-        a.printBoard(a.full_board);
-        System.out.println();
-        a.createSudokuPazzle(100);
-        a.printBoard(a.puzzle_board);
-        System.out.println();
-        a.solveSudokuPazzle();
-        a.printBoard(a.solve_board);
 
+    public int[][] getHuman_solve_board() {
+        return human_solve_board;
     }
+
+
 
 
 

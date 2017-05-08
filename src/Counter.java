@@ -1,18 +1,17 @@
-import javax.naming.ldap.StartTlsRequest;
-import java.util.Timer;
-import java.util.TimerTask;
+
 
 /**
  * Created by ikosteniov on 3/10/2017.
  */
 public class Counter{
 
-    private int seconds = 0;
-    private int minutes = 0;
+    private int seconds;
+    private int minutes;
 
 
     public Counter() {
-
+        seconds = 0;
+        minutes = 0;
     }
 
     public void AddSecond() {

@@ -1,9 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Created by ikosteniov on 3/7/2017.
- */
 public class Icon extends JButton {
 
     private Image img;

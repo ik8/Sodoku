@@ -1,5 +1,3 @@
-import sun.java2d.pipe.SpanShapeRenderer;
-
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.LineBorder;
@@ -9,9 +7,23 @@ import java.io.*;
 import java.util.*;
 
 
-/**
- * Created by ikosteniov on 3/4/2017.
- */
+//------------------------------------
+//             Sudoku Game
+//             -----------
+//
+// General : A Sudoku game application.
+//
+//  Input : Mouse and keyboard clicks.
+//
+// Process : Enables the user to play the sudoku game.
+//
+// Output : Graphical User Interface that enables to play.
+//
+//-------------------------------------
+// Programmer : Ilan Kosteniov
+// Date : 13/04/17
+//-------------------------------------
+
 public class Board extends JFrame implements Runnable, Serializable{
 
     public enum Levels{
@@ -28,40 +40,40 @@ public class Board extends JFrame implements Runnable, Serializable{
         }
     }
 
-    private int board_size = 9;
-    private int window_x = 800;
-    private int window_y = 800;
-    private int level;
-    private Levels level_description;
-    private JPanel sections[][];
-    private JPanel main;
-    private JPanel header;
-    private JPanel board_panel;
-    private JButton clue;
-    private Icon numbers[][];
-    private Thread thread;
-    private int question_marks = 0;
-    private Counter timer  = new Counter();
-    private int clue_left;
-    private Timer SimpleTimer;
-    private Sudok sudoku = new Sudok();
-    private int[][] players_board = new int[board_size][board_size];
-    private boolean board_flag = false;
-    private boolean gameloaded = false;
-    private int[][] loaded_puzzle_board = new int[9][9];
-    private JMenuItem save_button;
-    private JMenu game_actions;
-    private int[][] undo_board;
-    private int move_count=0;
-
-
+    private int             board_size = 9;
+    private int             window_x = 800;
+    private int             window_y = 800;
+    private int             level;
+    private Levels          level_description;
+    private JPanel          sections[][];
+    private JPanel          main;
+    private JPanel          header;
+    private JPanel          board_panel;
+    private JButton         clue;
+    private Icon            numbers[][];
+    private Thread          thread;
+    private int             question_marks = 0;
+    private Counter         timer  = new Counter();
+    private int             clue_left;
+    private Timer           SimpleTimer;
+    private Sudok           sudoku = new Sudok();
+    private int[][]         players_board = new int[board_size][board_size];
+    private boolean         board_flag = false;
+    private boolean         gameloaded = false;
+    private int[][]         loaded_puzzle_board = new int[9][9];
+    private JMenuItem       save_button;
+    private JMenu           game_actions;
+    private int[][]         undo_board;
+    private int             move_count=0;
+    private int             human_count = 1;
 
 
 
     public Board() {
-
+        // Builds the board
         createMenuBar();
         setSize(window_x, window_y);
+        setTitle("Sudoku");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
     }
@@ -74,16 +86,15 @@ public class Board extends JFrame implements Runnable, Serializable{
         setJMenuBar(menuBar);
 
         //Create a menu.
-
         JMenu menu = new JMenu("File");
         // set shortcut using setMnemonic method, uses the ALT mask
         menu.setMnemonic(KeyEvent.VK_F);// Load with Alt+F
         // add menu to menuBar
         menuBar.add(menu);
-
+        // Create a MenuItem
         JMenuItem menuItem;
 
-        save_button = new JMenuItem("  Save game",new ImageIcon("Star Trek.JPG"));
+        save_button = new JMenuItem("  Save game");
         save_button.setToolTipText("Click here to save your game");
         save_button.setAccelerator(KeyStroke.getKeyStroke(
                 KeyEvent.VK_S, ActionEvent.CTRL_MASK));
@@ -124,7 +135,7 @@ public class Board extends JFrame implements Runnable, Serializable{
         // add menu to menuBar
         menuBar.add(menu);
 
-        menuItem = new JMenuItem("  Easy",new ImageIcon("Star Trek.JPG"));
+        menuItem = new JMenuItem("  Easy");
         menuItem.setToolTipText("Click For a New Game");
         menuItem.setAccelerator(KeyStroke.getKeyStroke(
                 KeyEvent.VK_E, ActionEvent.CTRL_MASK));
@@ -145,7 +156,7 @@ public class Board extends JFrame implements Runnable, Serializable{
         });
         menu.add(menuItem);
         menu.addSeparator();
-        menuItem = new JMenuItem("  Intermidiate",new ImageIcon("Star Trek.JPG"));
+        menuItem = new JMenuItem("  Intermidiate");
         menuItem.setToolTipText("Click For a New Game");
         menuItem.setAccelerator(KeyStroke.getKeyStroke(
                 KeyEvent.VK_I, ActionEvent.CTRL_MASK));
@@ -164,7 +175,7 @@ public class Board extends JFrame implements Runnable, Serializable{
         });
         menu.add(menuItem);
         menu.addSeparator();
-        menuItem = new JMenuItem("  Hard",new ImageIcon("Star Trek.JPG"));
+        menuItem = new JMenuItem("  Hard");
         menuItem.setToolTipText("Click For a New Game");
         menuItem.setAccelerator(KeyStroke.getKeyStroke(
                 KeyEvent.VK_H, ActionEvent.CTRL_MASK));
@@ -184,7 +195,7 @@ public class Board extends JFrame implements Runnable, Serializable{
         menu.add(menuItem);
         menu.addSeparator();
 
-        menuItem = new JMenuItem("  Solver",new ImageIcon("Star Trek.JPG"));
+        menuItem = new JMenuItem("  Solver");
         menuItem.setToolTipText("Click to check the solver");
         menuItem.setAccelerator(KeyStroke.getKeyStroke(
                 KeyEvent.VK_S, ActionEvent.CTRL_MASK));
@@ -218,7 +229,7 @@ public class Board extends JFrame implements Runnable, Serializable{
         menuBar.add(game_actions);
         game_actions.setEnabled(false);
 
-        menuItem = new JMenuItem("  Reset game",new ImageIcon("Star Trek.JPG"));
+        menuItem = new JMenuItem("  Reset game");
         menuItem.setToolTipText("Click to reset game");
         menuItem.setAccelerator(KeyStroke.getKeyStroke(
                 KeyEvent.VK_R, ActionEvent.CTRL_MASK));
@@ -231,7 +242,7 @@ public class Board extends JFrame implements Runnable, Serializable{
         game_actions.add(menuItem);
         game_actions.addSeparator();
 
-        menuItem = new JMenuItem("  Undo move",new ImageIcon("Star Trek.JPG"));
+        menuItem = new JMenuItem("  Undo move");
         menuItem.setToolTipText("Click to undo last move");
         menuItem.setAccelerator(KeyStroke.getKeyStroke(
                 KeyEvent.VK_U, ActionEvent.CTRL_MASK));
@@ -240,7 +251,18 @@ public class Board extends JFrame implements Runnable, Serializable{
                 undoMove();
             }
         });
+        game_actions.add(menuItem);
+        game_actions.addSeparator();
+        menuItem = new JMenuItem("  Keys");
+        menuItem.setToolTipText("Click to undo last move");
+        menuItem.setAccelerator(KeyStroke.getKeyStroke(
+                KeyEvent.VK_U, ActionEvent.CTRL_MASK));
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                JOptionPane.showMessageDialog(null, "Only when cell is clicked!!\nd - Delete cell\ni - Human solver hint\n");
 
+            }
+        });
         game_actions.add(menuItem);
         game_actions.addSeparator();
 
@@ -288,13 +310,18 @@ public class Board extends JFrame implements Runnable, Serializable{
                                 sudoku.getPuzzle_board()[i][j] = 0;
                         }
                     }
+                    sudoku.solveSudokuPazzle();
                     if(sudoku.validPuzzle()==0) {
                         SimpleTimer.stop();
 
                         JOptionPane.showMessageDialog(null, "Board can not be solved.");
                     }
+                    else if(sudoku.canBeSolved(sudoku.getPuzzle_board()) == 2) {
+                        SimpleTimer.stop();
+                        JOptionPane.showMessageDialog(null, "Board has too many solutions.");
+
+                    }
                     else {
-                        sudoku.solveSudokuPazzle();
                         SimpleTimer.stop();
                         start();
                         sudoku.printBoard(sudoku.getSolve_board());
@@ -311,11 +338,25 @@ public class Board extends JFrame implements Runnable, Serializable{
         else {
             if(!gameloaded) {
                 sudoku = new Sudok();
+
                 sudoku.createFullBoard(0,0);
                 sudoku.createSudokuPazzle(this.level);
                 sudoku.solveSudokuPazzle();
-                sudoku.printBoard(sudoku.getFull_board());
                 initPlayersBoard();
+                sudoku.human_solution();
+
+
+                while(!sudoku.humanSolver(this.level)) {
+                    initPlayersBoard();
+                    sudoku.createFullBoard(0,0);
+                    sudoku.createSudokuPazzle(this.level);
+                    sudoku.solveSudokuPazzle();
+                    sudoku.createSudokuPazzle(this.level);
+                    sudoku.human_solution();
+                    sudoku.getHuman_solve_board();
+                }
+                initPlayersBoard();
+
             }
 
             SimpleTimer = new Timer(1000, new ActionListener(){
@@ -358,7 +399,7 @@ public class Board extends JFrame implements Runnable, Serializable{
             for (int j = 0; j < board_size; j++) {
                 undo_board[i][j] = 0;
                 if(sudoku.getPuzzle_board()[i][j]!=0)
-                    icon = new ImageIcon(Integer.toString(players_board[i][j]) + "-black.png");
+                    icon = new ImageIcon(Integer.toString(sudoku.getPuzzle_board()[i][j]) + "-black.png");
                 else
                     icon = new ImageIcon("question_mark.jpg");
                 Image img = icon.getImage();
@@ -385,6 +426,7 @@ public class Board extends JFrame implements Runnable, Serializable{
         add(main);
         game_actions.setEnabled(true);
         save_button.setEnabled(true);
+
     }
 
     public void newGUIBoardDisplay(Levels x) {
@@ -450,6 +492,7 @@ public class Board extends JFrame implements Runnable, Serializable{
 
             numbers[row][col].setBorder(new LineBorder(Color.ORANGE, 5));
             setFocusable(true);
+            sudoku.printOptions(row, col);
 
         }
 
@@ -466,6 +509,53 @@ public class Board extends JFrame implements Runnable, Serializable{
         }
 
         public void keyPressed(KeyEvent e) {
+            boolean human_flag = false;
+            if(e.getKeyCode() == KeyEvent.VK_I) {
+                int value = 0;
+                int x=0, y=0;
+                while(!human_flag) {
+                    for (int i = 0; i < 9; i++) {
+                        for (int j = 0; j < 9; j++) {
+                            if(human_count == sudoku.getStep_board()[i][j] && players_board[i][j] == 0) {
+                                value = sudoku.getSolve_board()[i][j];
+                                x=i;
+                                y=j;
+                                human_flag = true;
+                                break;
+                            }
+                        }
+                    }
+                    if(human_count==81)
+                        human_count = 0;
+                    human_count++;
+                }
+                    for (int i = 0; i < 9; i++) {
+                        for (int j = 0; j < 9; j++) {
+                            numbers[i][j].setBorder(new LineBorder(Color.WHITE));
+                            if(players_board[i][j] == value) {
+                                numbers[i][j].setBorder(new LineBorder(Color.RED, 5));
+                                setFocusable(true);
+                                repaint();
+                            }
+
+                        }
+
+
+                    }
+                for (int i = 0; i < 9; i++) {
+                    if(players_board[x][i] != 0)
+                        numbers[x][i].setBorder(new LineBorder(Color.ORANGE, 5));
+                    if(players_board[i][y] != 0)
+                        numbers[i][y].setBorder(new LineBorder(Color.ORANGE, 5));
+                    repaint();
+                }
+                    numbers[x][y].setBorder(new LineBorder(Color.BLUE, 5));
+                    this.row = x;
+                    this.col = y;
+
+                    sudoku.printBoard(players_board);
+
+            }
             if(e.getKeyCode() == KeyEvent.VK_D && sudoku.getPuzzle_board()[row][col] == 0) {
                 players_board[row][col] = 0;
                 Image img;
@@ -477,7 +567,11 @@ public class Board extends JFrame implements Runnable, Serializable{
                 repaint();
             }
             if(e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
-                numbers[row][col].setBorder(new LineBorder(Color.WHITE));
+                for (int i = 0; i < 9; i++) {
+                    for (int j = 0; j < 9; j++) {
+                        numbers[i][j].setBorder(new LineBorder(Color.WHITE));
+                    }
+                }
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_RIGHT:
                         col = (col == 8)?0:col+1;
@@ -562,12 +656,12 @@ public class Board extends JFrame implements Runnable, Serializable{
         } while(!clue_given && tries!= 0);
         if(question_marks == 0)
             clue.setEnabled(false);
-        boolean clue_flag = true;
-        if(tries == 0) {
-            for (int i = 0; i < 9; i++) {
-                for (int j = 0; j < 9; j++) {
-                    if (players_board[i][j] == 0) {
-                        players_board[i][j] = sudoku.getSolve_board()[i][j];
+                        boolean clue_flag = true;
+                        if(tries == 0) {
+                            for (int i = 0; i < 9; i++) {
+                                for (int j = 0; j < 9; j++) {
+                                    if (players_board[i][j] == 0) {
+                                        players_board[i][j] = sudoku.getSolve_board()[i][j];
                         ImageIcon icon = new ImageIcon(sudoku.getSolve_board()[i][j] + "-black.png");
                         img = icon.getImage();
                         numbers[i][j].setImg(img);
@@ -731,6 +825,8 @@ public class Board extends JFrame implements Runnable, Serializable{
                 numbers[i][j].setImg(img);
             }
         }
+        timer.setMinutes(0);
+        timer.setSeconds(0);
         repaint();
     }
 
@@ -791,7 +887,6 @@ public class Board extends JFrame implements Runnable, Serializable{
         }
         return true;
     }
-
     public void run() {
         try {
             Image img;
